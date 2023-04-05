@@ -72,3 +72,50 @@ export const likePost = async (req, res) => {
   }
 };
 
+// CREATE COMMENT
+export const createComment = async (req, res) => {
+  try {
+    const {id} = req.params;
+    const {comment: text, userId } = req.body;
+    const post = await Post.findById(id);
+    if(!post) {
+      return res.status(404).json({message: "Post not found"});
+    }
+    
+    const user = await User.findById(userId);
+    const newComment =({
+      text, 
+      userId,
+      firstName: user.firstName, 
+      lastName: user.lastName,
+      userPicturePath: user.picturePath,
+    });
+    post.comments.push(newComment);
+    await post.save();
+    res.status(201).json(post);
+  } catch (err) {
+    res.status(400).json({message: err.message});
+  }
+};
+
+// DELETE COMMENT
+export const deleteComment = async (req, res) => {
+  try {
+    const { id, commentId } = req.params;
+    const post = await Post.findById(id);
+    if (!post) {
+      return res.status(404).json({ message: "Post not found" });
+    }
+
+    const commentIndex = post.comments.findIndex((comment) => comment._id.toString() === commentId);
+    if (commentIndex === -1) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+
+    post.comments.splice(commentIndex, 1);
+    await post.save();
+    res.status(200).json(post);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
